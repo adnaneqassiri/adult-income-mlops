@@ -1,0 +1,6 @@
+paths:
+  raw: './data/raw'
+  processed: './data/processed'
+  logs: './logs/logs.log'
+  preprocessor: './artifacts/preprocessor/preprocessor.joblib'
+  model: './artifacts/models/model.pth'
