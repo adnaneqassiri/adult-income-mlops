@@ -1,6 +1,6 @@
 import torch
 from src import logger
-
+import mlflow
 
 def train_one_epoch(
     model,
@@ -102,6 +102,17 @@ def fit(
             val_loader,
             criterion,
             device
+        )
+        mlflow.log_metric(
+        "train_loss",
+        train_loss,
+        step=epoch
+        )
+
+        mlflow.log_metric(
+            "val_loss",
+            val_loss,
+            step=epoch
         )
 
         logger.info(
