@@ -5,7 +5,6 @@
 
 data/
 artifacts/
-logs/
 
 EDA.ipynb
 notes.md

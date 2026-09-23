@@ -67,3 +67,24 @@ docker run -d \
   income-api
 
 ~~~bash
+
+~~~bash
+
+sudo apt update
+sudo apt install -y docker.io
+
+sudo systemctl enable docker
+sudo systemctl start docker
+
+sudo docker --version
+
+# Add MLFLOW_URI
+nano .env
+
+sudo docker run -d \
+  --name income-api \
+  --restart unless-stopped \
+  --env-file .env \
+  -p 8000:8000 \
+  adnaneqassiri0/income-api:latest
+~~~
