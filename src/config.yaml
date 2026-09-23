@@ -4,3 +4,5 @@ paths:
   logs: './logs/logs.log'
   preprocessor: './artifacts/preprocessor/preprocessor.joblib'
   model: './artifacts/models/model.pth'
+
+run_id: '62d66dd219b54007b15c4bde78e3d81a'

@@ -3,3 +3,5 @@
 /logs
 **/__pycache__
 .env
+.vscode
+notes.md

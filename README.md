@@ -57,4 +57,13 @@ mlflow server \
     --allowed-hosts "*" \
     --cors-allowed-origins "*"
 
+
+
+docker build -t income-api .
+docker run -d \
+  --name income-api-container \
+  --env-file .env \
+  -p 8000:8000 \
+  income-api
+
 ~~~bash
