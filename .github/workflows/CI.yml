@@ -12,20 +12,19 @@ on: # On what events we trigger the job
 jobs: # Workflow start
   test:
     runs-on: ubuntu-latest # Runner
-
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4 # It downloads your repository into the temporary runner.
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with: 
-        python-version:"3.10" # But this action requires configuration.
-
-    - name: Install dependecies
-      run: | # Execute shell commands directly.
-        python -m pip install --upgrade pip
-        pip instaall -e ".[dev]"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # It downloads your repository into the temporary runner.
       
-    - name: Run Tests
-      run: pytest
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with: 
+          python-version: "3.10" # But this action requires configuration.
+
+      - name: Install dependecies
+        run: | # Execute shell commands directly.
+          python -m pip install --upgrade pip
+          pip instaall -e ".[dev]"
+        
+      - name: Run Tests
+        run: pytest
