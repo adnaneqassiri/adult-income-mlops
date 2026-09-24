@@ -1,4 +1,4 @@
-# Adult Income MLOps
+# Adult Income Prediction — End-to-End MLOps
 
 An end-to-end machine learning project that predicts whether a person's annual income exceeds **$50K** using the [UCI Adult dataset](https://archive.ics.uci.edu/dataset/2/adult).
 
