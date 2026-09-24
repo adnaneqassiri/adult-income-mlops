@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-
+from functools import lru_cache
 import joblib
 import mlflow
 import mlflow.pytorch
@@ -81,7 +81,9 @@ def load_artifacts():
 
 
 # Load once when application starts
-PREPROCESSOR, MODEL = load_artifacts()
+@lru_cache
+def get_artifacts():
+    return load_artifacts()
 
 
 # --------------------------------------------------
@@ -177,6 +179,7 @@ def prepare_input(raw_data):
 # --------------------------------------------------
 
 def predict(raw_data):
+    PREPROCESSOR, MODEL = get_artifacts()
 
     df = prepare_input(raw_data)
 

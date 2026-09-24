@@ -36,5 +36,12 @@ torch = { index = "pytorch-cpu" }
 include = ["src*"]
 namespaces = true
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+]
+
+
 [tool.setuptools.package-data]
 src = ["config.yaml"]
