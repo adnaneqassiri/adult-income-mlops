@@ -24,7 +24,7 @@ jobs: # Workflow start
       - name: Install dependecies
         run: | # Execute shell commands directly.
           python -m pip install --upgrade pip
-          pip instaall -e ".[dev]"
+          pip install -e ".[dev]"
         
       - name: Run Tests
         run: pytest
