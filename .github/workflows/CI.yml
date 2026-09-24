@@ -3,10 +3,10 @@ name: CI  # Human readable name on github actions
 on: # On what events we trigger the job
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 
 jobs: # Workflow start
