@@ -1,6 +1,7 @@
-/data
-/artifacts
-/logs
+/data/**/*.csv
+/artifacts/**/*.pth
+/artifacts/**/*.joblib
+/logs/*.log
 **/__pycache__
 .env
 .vscode
