@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 from functools import lru_cache
+
 import joblib
 import mlflow
 import mlflow.pytorch
@@ -20,17 +20,7 @@ from src import logger
 load_dotenv()
 
 config = load_yaml()
-
 RUN_ID = config["run_id"]
-
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
-
-if not MLFLOW_TRACKING_URI:
-    raise ValueError(
-        "MLFLOW_TRACKING_URI environment variable is not defined"
-    )
-
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
 
 # --------------------------------------------------
@@ -49,12 +39,23 @@ logger.info("Inference device: %s", DEVICE)
 # --------------------------------------------------
 
 def load_artifacts():
+
+    # Read the environment variable ONLY when
+    # artifacts are actually needed
+    mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+
+    if not mlflow_tracking_uri:
+        raise ValueError(
+            "MLFLOW_TRACKING_URI environment variable is not defined"
+        )
+
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
+
     logger.info(
         "Loading inference artifacts from MLflow run %s",
         RUN_ID
     )
 
-    # Download preprocessor
     preprocessor_path = mlflow.artifacts.download_artifacts(
         artifact_uri=(
             f"runs:/{RUN_ID}/"
@@ -64,7 +65,6 @@ def load_artifacts():
 
     preprocessor = joblib.load(preprocessor_path)
 
-    # Load PyTorch model
     model = mlflow.pytorch.load_model(
         f"runs:/{RUN_ID}/model",
         map_location=DEVICE
@@ -80,8 +80,7 @@ def load_artifacts():
     return preprocessor, model
 
 
-# Load once when application starts
-@lru_cache
+@lru_cache(maxsize=1)
 def get_artifacts():
     return load_artifacts()
 
@@ -90,16 +89,7 @@ def get_artifacts():
 # Prepare raw input
 # --------------------------------------------------
 
-def prepare_input(raw_data):
-    """
-    Accept:
-        - dict
-        - list of dicts
-        - pandas DataFrame
-
-    Return:
-        cleaned pandas DataFrame
-    """
+def prepare_input(raw_data, preprocessor):
 
     if isinstance(raw_data, dict):
         df = pd.DataFrame([raw_data])
@@ -116,16 +106,10 @@ def prepare_input(raw_data):
             "or pandas DataFrame"
         )
 
-    # Inference should normally not contain target.
-    # This just makes notebook/testing usage safer.
     df = df.drop(
         columns=["target"],
         errors="ignore"
     )
-
-    # ----------------------------------------------
-    # Basic cleaning used during training
-    # ----------------------------------------------
 
     categorical_features = [
         "workclass",
@@ -147,14 +131,11 @@ def prepare_input(raw_data):
                 .replace("?", np.nan)
             )
 
-    # ----------------------------------------------
-    # Validate expected columns
-    # ----------------------------------------------
-
-    if hasattr(PREPROCESSOR, "feature_names_in_"):
+    # Use the preprocessor passed to the function
+    if hasattr(preprocessor, "feature_names_in_"):
 
         expected_columns = list(
-            PREPROCESSOR.feature_names_in_
+            preprocessor.feature_names_in_
         )
 
         missing_columns = [
@@ -168,7 +149,6 @@ def prepare_input(raw_data):
                 f"Missing input columns: {missing_columns}"
             )
 
-        # Same column order used during training
         df = df[expected_columns]
 
     return df
@@ -179,19 +159,21 @@ def prepare_input(raw_data):
 # --------------------------------------------------
 
 def predict(raw_data):
-    PREPROCESSOR, MODEL = get_artifacts()
 
-    df = prepare_input(raw_data)
+    preprocessor, model = get_artifacts()
+
+    df = prepare_input(
+        raw_data,
+        preprocessor
+    )
 
     logger.info(
         "Running inference for %d sample(s)",
         len(df)
     )
 
-    # sklearn preprocessing
-    X_processed = PREPROCESSOR.transform(df)
+    X_processed = preprocessor.transform(df)
 
-    # Works whether sklearn returns DataFrame or ndarray
     X_array = np.asarray(
         X_processed,
         dtype=np.float32
@@ -203,10 +185,9 @@ def predict(raw_data):
         device=DEVICE
     )
 
-    # PyTorch inference
     with torch.inference_mode():
 
-        logits = MODEL(X_tensor)
+        logits = model(X_tensor)
 
         probabilities = torch.sigmoid(
             logits
@@ -216,7 +197,6 @@ def predict(raw_data):
             probabilities >= 0.5
         ).int()
 
-    # Convert tensors -> normal Python values
     probabilities = (
         probabilities
         .cpu()
