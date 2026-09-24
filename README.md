@@ -2,9 +2,46 @@
 
 An end-to-end machine learning project that predicts whether a person's annual income exceeds **$50K** using the [UCI Adult dataset](https://archive.ics.uci.edu/dataset/2/adult).
 
-The repository includes data preparation, a PyTorch binary classifier, MLflow experiment and artifact tracking, a FastAPI inference service, Docker packaging, tests, and a GitHub Actions deployment pipeline.
+The repository includes data preparation, a PyTorch binary classifier, MLflow experiment and artifact tracking, a FastAPI inference service, Docker packaging, tests, and a GitHub Actions CI/CD pipeline.
 
 ## Architecture
+
+```mermaid
+flowchart TB
+
+    subgraph CICD["CI/CD Pipeline"]
+        DEV["Developer<br/>Local Machine"]
+        GH["GitHub<br/>Repository"]
+        GHA["GitHub Actions<br/>1. Run pytest<br/>2. Build Docker image<br/>3. Push image<br/>4. Deploy to EC2"]
+        HUB["Docker Hub<br/>income-api:latest<br/>income-api:&lt;commit-sha&gt;"]
+        EC2["AWS EC2<br/>Production Server"]
+
+        DEV -->|"git push"| GH
+        GH --> GHA
+        GHA -->|"docker push"| HUB
+        HUB -->|"docker pull via SSH"| EC2
+    end
+
+    subgraph PROD["Production Architecture"]
+        CLIENT["Client / User"]
+        API["FastAPI<br/>/predict<br/>/health"]
+        INF["Inference Module<br/>Preprocessing + PyTorch model"]
+        MLFLOW["MLflow Server<br/>Experiment tracking + artifact access"]
+        S3["AWS S3<br/>Model & preprocessor artifacts"]
+
+        CLIENT -->|"POST /predict"| API
+        API --> INF
+        INF -->|"load artifacts"| MLFLOW
+        MLFLOW --> S3
+        S3 -->|"artifacts"| MLFLOW
+        MLFLOW --> INF
+        INF --> API
+        API -->|"JSON prediction"| CLIENT
+    end
+
+    EC2 --> API
+```
+
 
 ```text
 UCI Adult dataset
